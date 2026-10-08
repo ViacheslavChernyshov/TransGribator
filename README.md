@@ -1,9 +1,12 @@
 # TransGribator 🍄 — Локальна студія транскрибації мовлення (Whisper AI)
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-22c55e?style=flat&logo=github)](https://viacheslavchernyshov.github.io/TransGribator/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Runtime](https://img.shields.io/badge/Runtime-Browser%20(ONNX%20Web)-8b5cf6)](https://github.com/huggingface/transformers.js)
 [![Acceleration](https://img.shields.io/badge/Acceleration-WebGPU%20%7C%20WASM%20SIMD-06b6d4)](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20%26%20Offline-10b981)](#-100-приватність-та-робота-офлайн)
+
+🌐 **Спробувати онлайн прямо зараз:** **[https://viacheslavchernyshov.github.io/TransGribator/](https://viacheslavchernyshov.github.io/TransGribator/)**
 
 **TransGribator** — ультрашвидка автономна студія транскрибації аудіо та відео на базі моделей сімейства **OpenAI Whisper** (Large-v3-Turbo, Large-v3, Small, Base, Tiny), яка повністю виконується **всередині веб-браузера** за допомогою **Transformers.js v3** та **ONNX Runtime Web**.
 
