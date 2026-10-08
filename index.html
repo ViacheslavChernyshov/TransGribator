@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="uk" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="page-title">TransGribator — Локальна транскрибація Whisper (NPU / CPU / WebGPU)</title>
+    <meta
+      id="page-meta-desc"
+      name="description"
+      content="Швидка веб-система транскрибації відео та аудіо на базі Whisper та ONNX Web. 100% приватність, без PyTorch, апаратне прискорення NPU/CPU/WebGPU."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Top Header & App Bar -->
+    <header class="app-header">
+      <div class="header-container">
+        <!-- Brand Group -->
+        <div class="brand-group">
+          <div class="brand-logo" id="brand-logo">
+            <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="10" fill="url(#brand-grad)" />
+              <path d="M20 9C14.4772 9 10 13.4772 10 19C10 23.4183 12.859 27.1685 16.875 28.4722V31.5H23.125V28.4722C27.141 27.1685 30 23.4183 30 19C30 13.4772 25.5228 9 20 9Z" fill="white" fill-opacity="0.9" />
+              <circle cx="16" cy="16" r="2" fill="#7c3aed" />
+              <circle cx="24" cy="16" r="2" fill="#06b6d4" />
+              <path d="M12 20C14 22 17 23 20 23C23 23 26 22 28 20" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" />
+              <defs>
+                <linearGradient id="brand-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#7c3aed" />
+                  <stop offset="0.5" stop-color="#2563eb" />
+                  <stop offset="1" stop-color="#06b6d4" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="pulse-ring"></div>
+          </div>
+          <div class="brand-titles">
+            <h1 class="brand-name">TransGribator <span class="badge-version">v1.0 AI</span></h1>
+            <p class="brand-tagline" id="brand-tagline">Whisper In-Browser • 100% Локально</p>
+          </div>
+        </div>
+
+        <!-- Center: Hardware Diagnostics & System Strip (MOVED UP FROM LEFT PANEL) -->
+        <section class="hardware-top-bar" id="hardware-card" aria-label="Системні ресурси">
+          <div class="hw-strip-container">
+            <!-- Backend Pill -->
+            <div class="hw-strip-item backend" id="hw-item-backend" title="Обчислювальний бекенд">
+              <span class="status-dot" id="hw-status-dot"></span>
+              <span class="hw-strip-badge" id="hw-backend-badge">WebGPU</span>
+            </div>
+
+            <div class="hw-strip-sep"></div>
+
+            <!-- GPU / Accelerator -->
+            <div class="hw-strip-item gpu" id="hw-item-gpu" title="Графічний прискорювач">
+              <span class="hw-icon">⚡</span>
+              <span class="hw-strip-text truncate" id="hw-val-gpu">Визначення...</span>
+              <span class="hw-type-tag" id="hw-val-type">iGPU</span>
+            </div>
+
+            <div class="hw-strip-sep"></div>
+
+            <!-- OS -->
+            <div class="hw-strip-item os" id="hw-item-os" title="Операційна система">
+              <span class="hw-icon" id="hw-icon-os">🖥️</span>
+              <span class="hw-strip-text" id="hw-val-os">ОС...</span>
+            </div>
+
+            <div class="hw-strip-sep"></div>
+
+            <!-- CPU Cores -->
+            <div class="hw-strip-item cpu" id="hw-item-cpu" title="Процесорні ядра">
+              <span class="hw-icon">💻</span>
+              <span class="hw-strip-text" id="hw-val-cpu">32 ядра</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Header Controls -->
+        <div class="header-actions">
+          <!-- Hidden legacy status elements to preserve main.js compatibility -->
+          <div class="sr-hidden-status" id="os-status-pill" style="display:none;" aria-hidden="true">
+            <span class="status-icon" id="os-status-icon">🖥️</span>
+            <span class="status-text" id="os-status-label"></span>
+          </div>
+          <div class="sr-hidden-status" id="gpu-status-pill" style="display:none;" aria-hidden="true">
+            <span class="status-dot" id="gpu-status-dot"></span>
+            <span class="status-text" id="gpu-status-label"></span>
+          </div>
+
+          <!-- Language Switcher: UA / EN -->
+          <div class="lang-switch-group" id="lang-switch-group" title="Мова інтерфейсу / Interface Language">
+            <button type="button" class="lang-btn active" id="btn-lang-uk" data-lang="uk">UA</button>
+            <button type="button" class="lang-btn" id="btn-lang-en" data-lang="en">EN</button>
+          </div>
+
+          <!-- Dark / Light Theme Toggle -->
+          <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" title="Змінити тему">
+            <span class="theme-icon" id="theme-icon">🌙</span>
+          </button>
+
+          <!-- Deployment Modal Guide Button -->
+          <button class="btn-ghost" id="btn-info-modal" title="Як запустити на Linux">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span id="btn-info-label">Запуск на Linux</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Layout (Sidebar Controls + Studio Output) -->
+    <main class="app-layout">
+      <!-- Left Panel: Input & Settings (Dropzone OVER Whisper params) -->
+      <aside class="panel-column panel-control">
+        <!-- 1. Drop Zone / File Input Card (Compact) -->
+        <section class="card drop-card" id="drop-zone-card">
+          <div class="drop-zone" id="drop-zone" tabindex="0">
+            <input
+              type="file"
+              id="file-input"
+              accept="audio/*,video/*,.mp4,.webm,.mkv,.avi,.mov,.mp3,.wav,.m4a,.aac,.flac,.ogg"
+              class="hidden-input"
+            />
+            <div class="drop-zone-content" id="drop-content-idle">
+              <div class="upload-icon-wrapper">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <p class="drop-title" id="drop-title">Перетягніть відео або аудіо файл сюди</p>
+              <button class="btn-outline-sm btn-select-main" id="btn-select-file" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span id="btn-select-label">Вибрати файл на диску</span>
+              </button>
+            </div>
+
+            <!-- Active File Info Display -->
+            <div class="drop-zone-active hidden" id="drop-content-active">
+              <div class="active-file-header">
+                <div class="file-icon-box" id="file-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                  </svg>
+                </div>
+                <div class="file-text-details">
+                  <p class="file-name" id="file-name-label">filename.mp4</p>
+                  <p class="file-sub-info" id="file-sub-info">Розмір: 0 MB • Тривалість: 00:00</p>
+                </div>
+                <button class="btn-icon" id="btn-remove-file" title="Вибрати інший файл">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Interactive Media Player & Waveform Visualizer (Appears when file is selected) -->
+        <section class="card media-card hidden" id="media-card">
+          <div class="card-header media-header-compact">
+            <h2 class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="media-card-title">Медіаплеєр та форма хвилі</span>
+            </h2>
+            <div class="media-time" id="media-time-display">00:00 / 00:00</div>
+          </div>
+
+          <!-- Video preview container -->
+          <div class="video-container hidden" id="video-container">
+            <video id="video-player" playsinline preload="metadata"></video>
+          </div>
+          <!-- Audio element -->
+          <audio id="audio-player" preload="metadata" class="hidden"></audio>
+
+          <!-- Waveform Canvas -->
+          <div class="waveform-box" id="waveform-box">
+            <canvas id="waveform-canvas" height="36"></canvas>
+            <div class="waveform-tooltip hidden" id="waveform-tooltip">00:00</div>
+          </div>
+
+          <!-- Playback controls -->
+          <div class="player-controls">
+            <button class="btn-player" id="btn-play-pause" title="Відтворення / Пауза">
+              <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+            </button>
+            <button class="btn-player-sm" id="btn-backward" title="Назад на 5 секунд">-5с</button>
+            <button class="btn-player-sm" id="btn-forward" title="Вперед на 5 секунд">+5с</button>
+            <div class="player-speed-select">
+              <select id="select-playback-speed">
+                <option value="1">1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2.0">2.0x</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. AI Whisper Configuration Card (UNDER Dropzone) -->
+        <section class="card config-card" id="config-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
+                <path d="M12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 10a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"></path>
+              </svg>
+              <span id="config-card-title">Параметри інференсу Whisper</span>
+            </h2>
+          </div>
+
+          <div class="form-grid">
+            <!-- Model selection -->
+            <div class="form-group full-width">
+              <label for="select-model" class="form-label">
+                <span id="label-model-text">Модель Whisper</span>
+                <span class="label-hint" id="model-size-hint">~1.54 ГБ (FP16)</span>
+              </label>
+              <select id="select-model" class="form-select">
+                <option value="onnx-community/whisper-large-v3-turbo" selected>
+                  ⭐ Whisper Large-v3-Turbo (~1.5 ГБ • FP16 • Топ)
+                </option>
+                <option value="onnx-community/whisper-large-v3-ONNX">
+                  👑 Whisper Large-v3 (~2.9 ГБ • 32 шари • Еталон)
+                </option>
+                <option value="onnx-community/whisper-small">
+                  🚀 Whisper Small (~450–950 МБ • Баланс)
+                </option>
+                <option value="onnx-community/whisper-base">
+                  ⚡ Whisper Base (~145–290 МБ • Швидкий)
+                </option>
+                <option value="onnx-community/whisper-tiny">
+                  🌐 Whisper Tiny (~75–150 МБ • Ультралегкий)
+                </option>
+              </select>
+
+              <!-- Model Cache Status & Preload Button Bar -->
+              <div class="model-cache-bar">
+                <div class="cache-status-badge not-cached" id="model-cache-badge" title="Статус моделі в кеші браузера">
+                  <span class="cache-badge-dot"></span>
+                  <span id="model-cache-label">☁ Не завантажено</span>
+                </div>
+                <button type="button" class="btn-preload" id="btn-preload-model" title="Завантажити ваги моделі в кеш браузера">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span id="btn-preload-label">Завантажити в кеш</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Device selection -->
+            <div class="form-group">
+              <label for="select-device" class="form-label" id="label-device-text">Прискорення</label>
+              <select id="select-device" class="form-select">
+                <option value="auto" selected>🤖 Авто (WebGPU / WASM)</option>
+                <option value="webgpu">⚡ WebGPU (iGPU / Графіка)</option>
+                <option value="wasm">💻 CPU (WASM SIMD)</option>
+              </select>
+            </div>
+
+            <!-- Precision profile -->
+            <div class="form-group">
+              <label for="select-precision" class="form-label">
+                <span id="label-precision-text">Точність ваг</span>
+                <span class="label-hint" id="precision-hint">FP16 / FP32</span>
+              </label>
+              <select id="select-precision" class="form-select">
+                <option value="max" selected>💎 Максимальна (FP16/FP32)</option>
+                <option value="eco">⚡ Економічна (Q4/INT8)</option>
+              </select>
+            </div>
+
+            <!-- CPU Cores / Threads selection -->
+            <div class="form-group" id="group-threads">
+              <label for="select-threads" class="form-label">
+                <span id="label-threads-text">Навантаження CPU</span>
+                <span class="label-hint" id="threads-hint">32 ядра</span>
+              </label>
+              <select id="select-threads" class="form-select">
+                <option value="100" selected>⚡ 100% (32 ядра)</option>
+              </select>
+            </div>
+
+            <!-- Timestamps toggle -->
+            <div class="form-group form-group-toggle">
+              <label for="check-timestamps" class="form-label" id="label-timestamps-text">Субтитри</label>
+              <div class="toggle-wrapper">
+                <input type="checkbox" id="check-timestamps" class="checkbox-input" checked />
+                <label for="check-timestamps" class="checkbox-label" id="label-check-timestamps">З таймкодами</label>
+              </div>
+            </div>
+
+            <!-- Language selection -->
+            <div class="form-group">
+              <label for="select-language" class="form-label" id="label-language-text">Мова мовлення</label>
+              <select id="select-language" class="form-select">
+                <option value="uk" selected>🇺🇦 Українська</option>
+                <option value="en">🇬🇧 Англійська</option>
+                <option value="auto">🌐 Автовизначення</option>
+                <option value="ru">🇷🇺 Російська</option>
+                <option value="be">🇧🇾 Білоруська</option>
+                <option value="kk">🇰🇿 Казахська</option>
+                <option value="de">🇩🇪 Німецька</option>
+                <option value="fr">🇫🇷 Французька</option>
+                <option value="es">🇪🇸 Іспанська</option>
+                <option value="it">🇮🇹 Італійська</option>
+                <option value="pl">🇵🇱 Польська</option>
+                <option value="pt">🇵🇹 Португальська</option>
+                <option value="tr">🇹🇷 Турецька</option>
+                <option value="zh">🇨🇳 Китайська</option>
+                <option value="ja">🇯🇵 Японська</option>
+                <option value="ko">🇰🇷 Корейська</option>
+                <option value="ar">🇸🇦 Арабська</option>
+                <option value="hi">🇮🇳 Гінді</option>
+                <option value="nl">🇳🇱 Нідерландська</option>
+                <option value="sv">🇸🇪 Шведська</option>
+                <option value="cs">🇨🇿 Чеська</option>
+                <option value="ro">🇷🇴 Румунська</option>
+              </select>
+            </div>
+
+            <!-- Task selection -->
+            <div class="form-group">
+              <label for="select-task" class="form-label" id="label-task-text">Завдання</label>
+              <select id="select-task" class="form-select">
+                <option value="transcribe" selected>📝 Транскрибація</option>
+                <option value="translate">🌐 Переклад в EN</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Execution Buttons -->
+          <div class="action-buttons-group">
+            <button class="btn-primary" id="btn-transcribe" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="btn-transcribe-label">Запустити транскрибацію</span>
+            </button>
+            <button class="btn-danger hidden" id="btn-cancel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12"></rect>
+              </svg>
+              <span id="btn-cancel-label">Зупинити</span>
+            </button>
+          </div>
+
+          <!-- Live Progress Box -->
+          <div class="progress-box hidden" id="progress-box">
+            <div class="progress-header">
+              <span class="progress-stage-badge" id="progress-stage-badge">Завантаження моделі</span>
+              <span class="progress-percent" id="progress-percent-label">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <p class="progress-status-text" id="progress-status-text">Ініціалізація...</p>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Right Panel: Transcription Studio (Clean & Spacious) -->
+      <section class="panel-column panel-studio">
+        <div class="card studio-card">
+          <!-- Studio Top Toolbar -->
+          <div class="studio-header">
+            <div class="studio-title-group">
+              <h2 class="studio-title" id="studio-title">Студія розшифровки</h2>
+              <div class="stats-pills-row">
+                <span class="stat-pill"><span id="stat-dur-label">Тривалість:</span> <strong id="stat-duration">00:00</strong></span>
+                <span class="stat-pill"><span id="stat-words-label">Слів:</span> <strong id="stat-words">0</strong></span>
+                <span class="stat-pill"><span id="stat-segs-label">Фраз:</span> <strong id="stat-segments">0</strong></span>
+              </div>
+            </div>
+
+            <!-- Search and View Mode -->
+            <div class="studio-controls-row">
+              <div class="search-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="search-input" placeholder="Пошук по фразах..." />
+                <button class="search-clear hidden" id="search-clear" title="Очистити пошук">×</button>
+              </div>
+
+              <!-- View Switcher Tabs -->
+              <div class="tabs-group" id="view-mode-tabs">
+                <button class="tab-btn active" id="tab-subtitles" data-mode="subtitles" title="Показувати субтитрами з таймкодами">
+                  Субтитри
+                </button>
+                <button class="tab-btn" id="tab-article" data-mode="article" title="Показувати суцільним текстом">
+                  Текст
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Action Bar -->
+          <div class="export-bar">
+            <div class="export-actions-left">
+              <button class="btn-tool" id="btn-copy" title="Скопіювати весь текст у буфер">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="btn-copy-label">Скопіювати</span>
+              </button>
+            </div>
+
+            <div class="export-buttons-group">
+              <button class="btn-download-primary" id="btn-download-txt" title="Зберегти файл .txt">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span id="btn-download-label">Зберегти .TXT</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Transcript Content Area -->
+          <div class="transcript-viewport" id="transcript-viewport">
+            <!-- Empty State Placeholder -->
+            <div class="empty-state" id="empty-state">
+              <div class="empty-icon-glow">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </div>
+              <h3 class="empty-title" id="empty-title">Тут з'явиться готовий текст</h3>
+              <p class="empty-desc" id="empty-desc">
+                Перетягніть відео або аудіо файл у ліву панель та натисніть «Запустити транскрибацію».
+                Модель Whisper автоматично розпізнає мову та розставить точні таймкоди.
+              </p>
+              <div class="features-badges">
+                <span class="feat-badge" id="feat-privacy">🔒 100% Приватно (без серверів)</span>
+                <span class="feat-badge" id="feat-hardware">⚡ Апаратне прискорення WebGPU/CPU</span>
+                <span class="feat-badge" id="feat-seek">🎯 Клік на таймкод перемотує плеєр</span>
+              </div>
+            </div>
+
+            <!-- Subtitle Cards Feed -->
+            <div class="subtitles-feed hidden" id="subtitles-feed"></div>
+
+            <!-- Plain Article Editor Textarea -->
+            <div class="article-view hidden" id="article-view">
+              <textarea
+                id="article-textarea"
+                placeholder="Тут відображатиметься суцільний текст для редагування..."
+                spellcheck="true"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal: Linux & Windows Deployment & Portability Guide -->
+    <div class="modal-overlay hidden" id="linux-modal">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <h2 class="modal-title" id="modal-title">Запуск на Linux та Windows (Без sudo)</h2>
+          </div>
+          <button class="btn-icon" id="btn-close-modal">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-section">
+            <h3 class="modal-subtitle" id="modal-sec1-title">1. Чистий Linux без sudo та без встановлення програм</h3>
+            <p class="modal-text" id="modal-sec1-desc">
+              У проєкт уже вбудовано автономний статичний сервер <code>bin/server-linux</code> (musl libc).
+              Йому <strong>не потрібні права root / sudo</strong>, не потрібен Node.js, Python чи сторонні бібліотеки!
+            </p>
+            <p class="modal-text" id="modal-sec1-cmd-label">На чистому Linux достатньо запустити:</p>
+            <pre class="code-snippet"><code>chmod +x start.sh && ./start.sh</code></pre>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-subtitle" id="modal-sec2-title">2. Запуск на Windows</h3>
+            <p class="modal-text" id="modal-sec2-desc">
+              Для Windows у проєкт вбудовано <code>bin/server-windows.exe</code>. Просто двічі клікніть файл:
+            </p>
+            <pre class="code-snippet"><code>start.bat</code></pre>
+            <p class="modal-text" id="modal-sec2-note">Браузер відкриється автоматично за адресою <code>http://localhost:8080</code>.</p>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-subtitle" id="modal-sec3-title">3. Увімкнення WebGPU / NPU на Linux</h3>
+            <p class="modal-text" id="modal-sec3-desc">
+              У Chrome / Chromium на Linux увімкніть апаратне прискорення для максимальної швидкості:
+            </p>
+            <ul class="modal-list">
+              <li><code>chrome://flags/#enable-unsafe-webgpu</code> &rarr; <strong>Enabled</strong></li>
+              <li><code>chrome://flags/#enable-vulkan</code> &rarr; <strong>Enabled</strong></li>
+            </ul>
+            <p class="modal-text" id="modal-sec3-note">
+              Якщо WebGPU не активовано, модель автоматично працюватиме на всіх ядрах процесора через <strong>WASM SIMD</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-primary-sm" id="btn-close-modal-confirm">Зрозуміло</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

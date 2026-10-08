@@ -1,0 +1,31 @@
+{
+  "name": "transgribator",
+  "version": "1.0.0",
+  "description": "Local browser-based speech-to-text transcription studio powered by Whisper and ONNX Runtime Web (WebGPU & WASM SIMD)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node serve.js"
+  },
+  "keywords": [
+    "whisper",
+    "speech-to-text",
+    "transcription",
+    "webgpu",
+    "wasm",
+    "onnx-runtime",
+    "transformers-js",
+    "privacy-first"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.63.0",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0"
+  }
+}

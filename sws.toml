@@ -1,0 +1,11 @@
+[general]
+root = "dist"
+port = 8080
+host = "0.0.0.0"
+page-fallback = "dist/index.html"
+
+[[headers]]
+source = "/**/*"
+[headers.headers]
+"Cross-Origin-Opener-Policy" = "same-origin"
+"Cross-Origin-Embedder-Policy" = "require-corp"
